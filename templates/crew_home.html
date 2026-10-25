@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}{{ flight.number }} · SkyBite Operations{% endblock %}
+{% block body_class %}theme-crew page-crew{% endblock %}
+
+{% block content %}
+<div class="shell app-shell crew-shell">
+  <header class="topbar app-topbar crew-topbar">
+    {% include "_brand.html" %}
+    <div class="ops-identity"><span class="ops-identity-dot"></span><span><b>FLIGHT OPERATIONS</b><small>CREW WORKSPACE</small></span></div>
+    <div class="topbar-right"><span class="crew-user-mark">{{ staff_name[:1]|upper }}</span><span class="crew-user-name">{{ staff_name }}</span><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="logout_role" value="crew"><button class="btn btn-quiet signout-btn" type="submit">Sign out <span aria-hidden="true">↗</span></button></form></div>
+  </header>
+
+  <main class="ops dashboard-ops">
+    <section class="ops-welcome">
+      <div><div class="eyebrow"><span class="eyebrow-star">✳</span> THE SKYBITE CONTROL ROOM</div><h1 class="ops-title">Good service starts <em>before take-off.</em></h1><p>One clear view of meal demand, passenger choices and what's still to be done.</p></div>
+      <div class="ops-live-tag"><span class="live-dot"></span><span><b>DEMO LIVE</b><small>{{ fmt_day(now) }} · {{ fmt_time(now) }}</small></span></div>
+    </section>
+
+    <section class="ops-flight-hero" aria-label="Flight {{ flight.number }} from {{ flight.origin_city }} to {{ flight.dest_city }}" data-tilt data-tilt-strength="2">
+      <div class="ops-flight-copy"><span class="micro-label">CURRENT FLIGHT</span><h2>{{ flight.number }} <span class="ops-flight-badge">{% if locked %}ORDERS CLOSED{% else %}ON THE BOARD{% endif %}</span></h2><p>{{ flight.origin_city }} <span>→</span> {{ flight.dest_city }}</p><div class="ops-route-metadata"><span><small>DEPARTS</small><b>{{ fmt_day(flight.departs) }}, {{ fmt_time(flight.departs) }}</b></span><span><small>KITCHEN CUTOFF</small><b>{{ fmt_day(flight.cutoff) }}, {{ fmt_time(flight.cutoff) }}</b></span></div></div>
+      <div class="ops-flight-visual" aria-hidden="true"><div class="ops-flight-orbit orbit-a"></div><div class="ops-flight-orbit orbit-b"></div><svg viewBox="0 0 500 190" class="ops-route-svg"><defs><linearGradient id="opsRouteGradient" x1="0" x2="1"><stop stop-color="#D4B982"/><stop offset="1" stop-color="#F2E5C6"/></linearGradient></defs><path class="ops-contour" d="M18 150C102 16 201 43 264 94S395 152 482 25"/><path class="ops-contour contour-b" d="M10 173C93 38 194 65 256 114S385 173 473 48"/><path class="ops-route-track" d="M54 136 C154 17 302 173 438 54"/><path class="ops-route-pulse" d="M54 136 C154 17 302 173 438 54"/><g class="ops-route-plane"><animateMotion dur="9s" repeatCount="indefinite" rotate="auto" path="M54 136 C154 17 302 173 438 54"/><g transform="translate(-20,-20)"><path d="M2 19 17 16 26 3Q27 2 29 3L26 15 38 19Q40 20 38 22L25 22 20 35 17 34 17 22 3 22Z" fill="#F2E5C6" stroke="#fff" stroke-opacity=".6" stroke-width="1.1" stroke-linejoin="round"/></g></g><circle cx="54" cy="136" r="5" class="ops-route-point"/><circle cx="438" cy="54" r="5" class="ops-route-point"/></svg><div class="ops-city ops-city-origin"><small>DEPARTURE</small><b>{{ flight.origin }}</b><span>{{ flight.origin_city }}</span></div><div class="ops-city ops-city-dest"><small>ARRIVAL</small><b>{{ flight.dest }}</b><span>{{ flight.dest_city }}</span></div></div>
+      <div class="ops-flight-bottom"><span><i class="ops-bottom-mark">✳</i> SERVICE OVERVIEW</span><span class="ops-bottom-status"><i></i>{% if locked %}Kitchen orders are locked{% else %}Kitchen window open{% endif %}</span></div>
+    </section>
+
+    <section class="metric-grid" aria-label="Flight meal metrics">
+      <article class="metric-card metric-primary"><div class="metric-top"><span class="metric-icon icon-people">◉</span><span class="metric-overline">PASSENGERS</span><span class="metric-trend">LIVE</span></div><div class="metric-number count-up" data-count="{{ total }}">{{ total }}</div><div class="metric-label">On this booking set</div><div class="metric-bottom"><span class="metric-mini-bar"><i style="--w: 100%"></i></span><span>{{ seats }} seats</span></div></article>
+      <article class="metric-card"><div class="metric-top"><span class="metric-icon icon-meals">✳</span><span class="metric-overline">MEALS SELECTED</span></div><div class="metric-number count-up" data-count="{{ total - not_chosen }}">{{ total - not_chosen }}</div><div class="metric-label">Passenger choices saved</div><div class="metric-bottom"><span class="metric-mini-bar"><i style="--w: {{ ((total - not_chosen) / (total if total else 1) * 100)|round(1) }}%"></i></span><span>{{ ((total - not_chosen) / (total if total else 1) * 100)|round|int }}%</span></div></article>
+      <article class="metric-card metric-warning"><div class="metric-top"><span class="metric-icon icon-pending">＋</span><span class="metric-overline">STILL TO CHOOSE</span></div><div class="metric-number count-up" data-count="{{ not_chosen }}">{{ not_chosen }}</div><div class="metric-label">Need a passenger decision</div><div class="metric-bottom"><span class="metric-mini-bar"><i style="--w: {{ (not_chosen / (total if total else 1) * 100)|round(1) }}%"></i></span><span>Pending</span></div></article>
+      <article class="metric-card"><div class="metric-top"><span class="metric-icon icon-message">↗</span><span class="metric-overline">WHATSAPP CHOICES</span></div><div class="metric-number count-up" data-count="{{ wa_choices }}">{{ wa_choices }}</div><div class="metric-label">Saved from the chat</div><div class="metric-bottom"><span class="metric-mini-bar"><i style="--w: {{ (wa_choices / (total if total else 1) * 100)|round(1) }}%"></i></span><span>Synced</span></div></article>
+    </section>
+
+    <nav class="ops-workspace-tabs" role="tablist" aria-label="Crew workspace sections">
+      <button class="workspace-tab is-active" id="tab-seat-plan" type="button" role="tab"
+              aria-selected="true" aria-controls="seat-plan-panel" tabindex="0"
+              data-workspace-tab="seat-plan">
+        <span class="workspace-tab-index">01</span>
+        <span class="workspace-tab-copy"><strong>Seat Plan</strong><small>Cabin map, meal assignments and live updates</small></span>
+        <span class="workspace-tab-arrow" aria-hidden="true">↗</span>
+      </button>
+      <button class="workspace-tab" id="tab-demand-forecast" type="button" role="tab"
+              aria-selected="false" aria-controls="demand-forecast-panel" tabindex="-1"
+              data-workspace-tab="demand-forecast">
+        <span class="workspace-tab-index">02</span>
+        <span class="workspace-tab-copy"><strong>Demand Forecast</strong><small>Past-flight mix, expected demand and buffer</small></span>
+        <span class="workspace-tab-arrow" aria-hidden="true">↗</span>
+      </button>
+    </nav>
+
+    <div class="ops-workspace-content">
+      <section class="workspace-panel is-active" id="seat-plan-panel" role="tabpanel"
+               aria-labelledby="tab-seat-plan" data-workspace-panel="seat-plan">
+        {% include "_seatmap.html" %}
+        {% include "_live.html" %}
+
+        <section class="ops-content-grid">
+          <div class="ops-panel meal-demand-panel" aria-labelledby="meal-demand-title">
+            <div class="panel-heading"><div><span class="micro-label">GALLEY PREPARATION</span><h2 id="meal-demand-title">The meal breakdown</h2><p>Use these counts to prepare the load for this flight.</p></div><span class="panel-count"><b>{{ rows|length + (1 if not_chosen else 0) }}</b><small>CATEGORIES</small></span></div>
+            <div class="meal-demand-table-wrap"><table class="meal-table"><thead><tr><th scope="col">MEAL TYPE</th><th scope="col" class="num">PASSENGERS</th><th scope="col" class="bar-head">SHARE OF LOAD</th></tr></thead><tbody>
+              {% for r in rows %}<tr data-lv-code="{{ r.code }}"><th scope="row"><span class="meal-dot" style="--meal: {{ r.color }}"></span><button class="meal-type-trigger" type="button" data-toggle-dishes="{{ r.code }}" aria-expanded="false" aria-label="Show {{ r.name }} dish breakdown"><span>{{ r.name }}</span><span class="meal-type-chevron" aria-hidden="true">＋</span></button></th><td class="num"><strong>{{ r.n }}</strong></td><td class="bar-cell"><span class="bar-track"><span class="bar" style="--meal: {{ r.color }}; --w: {{ (r.n / biggest * 100)|round(1) }}%"></span></span></td></tr>{% endfor %}
+              <tr class="row-open"><th scope="row"><span class="meal-dot dot-empty"></span><span>Not chosen yet</span></th><td class="num"><strong>{{ not_chosen }}</strong></td><td class="bar-cell"><span class="bar-track"><span class="bar bar-empty" style="--w: {{ (not_chosen / biggest * 100)|round(1) }}%"></span></span></td></tr>
+            </tbody></table></div>
+            <div class="panel-footnote"><span class="footnote-check">✓</span><span>Counts update when a passenger saves a choice on the website or in WhatsApp. Select any meal type to see the specific dishes passengers picked.</span></div>
+          </div>
+
+          <div class="ops-right-column">
+            <aside class="ops-panel summary-panel" aria-labelledby="summary-title">
+              <div class="panel-heading compact-heading"><div><span class="micro-label">SERVICE SNAPSHOT</span><h2 id="summary-title">Flight summary</h2></div><span class="summary-mark">✳</span></div>
+              <dl class="summary-list"><div><dt>Booked passengers</dt><dd><span class="count-up" data-count="{{ total }}">{{ total }}</span><small>of {{ seats }} seats</small></dd></div><div><dt>Meal not chosen yet</dt><dd><span class="count-up" data-count="{{ not_chosen }}">{{ not_chosen }}</span></dd></div><div><dt>Chosen on WhatsApp</dt><dd><span class="count-up" data-count="{{ wa_choices }}">{{ wa_choices }}</span></dd></div><div><dt>Changed on website</dt><dd><span class="count-up" data-count="{{ changes }}">{{ changes }}</span></dd></div><div><dt>Kitchen cutoff</dt><dd class="summary-cutoff">{{ fmt_time(flight.cutoff) }}<small>{{ fmt_day(flight.cutoff) }}</small></dd></div></dl>
+            </aside>
+
+            <aside class="ops-panel demo-panel" aria-labelledby="demo-title">
+              <div class="demo-panel-heading"><div><span class="micro-label">PRESENTATION TOOLS</span><h2 id="demo-title">Demo controls</h2></div><button class="panel-toggle" type="button" data-collapse-target="demo-controls-body" aria-expanded="true" aria-controls="demo-controls-body"><span>Hide</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+              <div class="demo-controls-body" id="demo-controls-body">
+                <p class="demo-description">Replay the passenger WhatsApp timeline in order: 48-hour planning reminder, a last call at 6 hours, then meal selection closes 4 hours before departure. After cutoff, changes need crew review.</p>
+                <div class="demo-clock"><span class="clock-icon">◷</span><span><small>DEMO CLOCK</small><b>{{ fmt_day(now) }} · {{ fmt_time(now) }}</b><small>{{ humanize(flight.departs - now) }} until departure</small></span></div>
+                {% if reminders_sent %}<p class="demo-status"><span>✓</span> 48-hour WhatsApp reminder sent to {{ reminders_sent }} bookings.</p>{% endif %}
+                {% if reminders_6_sent %}<p class="demo-status"><span>✓</span> 6-hour last-call reminder sent to {{ reminders_6_sent }} bookings.</p>{% endif %}
+                {% if cutoff_notices_sent %}<p class="demo-status"><span>✓</span> 4-hour cutoff notice sent to {{ cutoff_notices_sent }} bookings.</p>{% endif %}
+                <div class="demo-actions">
+                  <form method="post" action="{{ url_for('fast_forward') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-primary btn-block" type="submit" {% if reminders_sent or now > forty_eight_hour_mark %}disabled{% endif %}>Jump to 48-hour reminder <span aria-hidden="true">↗</span></button></form>
+                  <form method="post" action="{{ url_for('fast_forward_six_hours') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-secondary btn-block" type="submit" {% if reminders_6_sent or now > six_hour_mark %}disabled{% endif %}>Jump to 6-hour WhatsApp reminder <span aria-hidden="true">◷</span></button></form>
+                  <form method="post" action="{{ url_for('fast_forward_cutoff') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-secondary btn-block" type="submit" {% if cutoff_notices_sent %}disabled{% endif %}>Close meal selection at 4 hours <span aria-hidden="true">⌁</span></button></form>
+                  <a class="btn btn-secondary btn-block" href="{{ url_for('phone') }}" target="_blank" rel="noopener"><span class="phone-link-icon">▣</span> Open passenger's phone <span aria-hidden="true">↗</span></a>
+                  <form method="post" action="{{ url_for('reset_demo') }}" onsubmit="return confirm('Reset the demo? Meals, messages, late requests and the clock go back to the start.')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-quiet btn-block reset-btn" type="submit">Reset demo data <span aria-hidden="true">↻</span></button></form>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </section>
+
+      <section class="workspace-panel" id="demand-forecast-panel" role="tabpanel"
+               aria-labelledby="tab-demand-forecast" data-workspace-panel="demand-forecast" hidden>
+        <section class="ops-panel demand-forecast-panel" id="demand-forecast" aria-labelledby="demand-forecast-title">
+          <div class="forecast-heading">
+            <div>
+              <span class="micro-label">SMART STOCK PLANNING</span>
+              <h2 id="demand-forecast-title">Demand forecast <span class="forecast-heading-mark">✳</span></h2>
+              <p>Use the meal choices already saved, learn from comparable flights, then add a measured safety buffer.</p>
+            </div>
+            <span class="forecast-estimate-tag"><i></i> Planning estimate</span>
+          </div>
+
+          <div class="forecast-season-note">
+            <span class="forecast-season-icon" aria-hidden="true">✳</span>
+            <div>
+              <strong>{% if festivals %}{{ festivals[0].name }}-aware stock plan{% else %}Standard meal planning{% endif %}</strong>
+              <p>{% if festivals %}The flight date overlaps {{ festivals[0].name }}. Forecast demand uses the {{ festivals[0].name }} reference mix, with a targeted reserve only for the meal options tagged for this festival.{% else %}No festival is tagged for this flight date, so the forecast uses the regular-flight meal mix and standard safety stock only.{% endif %}</p>
+            </div>
+          </div>
+
+          <div class="forecast-history-strip">
+            <div class="forecast-history-copy">
+              <span class="micro-label">PREVIOUS FLIGHT SIGNAL</span>
+              <strong>{{ forecast_history_label }}</strong>
+              <p>Pending passengers are distributed using the selected-meal mix from these reference flights, rather than being assigned randomly to a meal.</p>
+              <span class="forecast-sample-note">Sample history for the hackathon demo — the original project had no stored historical flight records.</span>
+            </div>
+            {% if festivals %}
+            <div class="forecast-history-comparison" aria-label="Historical festival meal mix comparison">
+              <div><small>FESTIVAL-ALIGNED MEALS</small><strong>{{ "%.1f"|format(forecast_context_share) }}%</strong><span>past {{ festivals[0].name }} flights</span></div>
+              <div class="forecast-history-baseline"><small>REGULAR FLIGHTS</small><strong>{{ "%.1f"|format(forecast_regular_share) }}%</strong><span>same meal options</span></div>
+              <p class="forecast-history-delta">{% if forecast_uplift >= 0 %}+{% endif %}{{ "%.1f"|format(forecast_uplift) }} percentage points during {{ festivals[0].name }}</p>
+            </div>
+            {% else %}
+            <div class="forecast-history-comparison forecast-history-comparison-single">
+              <div><small>REGULAR FLIGHT REFERENCES</small><strong>{{ forecast_history_flights }}</strong><span>comparable sample flights</span></div>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="forecast-stat-row" aria-label="Forecast overview">
+            <div class="forecast-stat"><span>CONFIRMED</span><strong>{{ forecast_confirmed }}</strong><small>Saved meal choices</small></div>
+            <div class="forecast-stat"><span>FROM UNDECIDED</span><strong>{{ forecast_from_pending }}</strong><small>Estimated by past-flight mix</small></div>
+            <div class="forecast-stat forecast-stat-buffer"><span>BUFFER ADDED</span><strong>+{{ forecast_buffer }}</strong><small>{{ forecast_standard_buffer }} standard{% if festivals %} + {{ forecast_seasonal_buffer }} {{ festivals[0].name }}{% endif %}</small></div>
+            <div class="forecast-stat forecast-stat-total"><span>PREPARE TOTAL</span><strong>{{ forecast_stock }}</strong><small>Forecast plus buffer</small></div>
+          </div>
+
+          <section class="forecast-table-card" aria-labelledby="forecast-table-title">
+            <div class="forecast-table-card-head">
+              <div class="forecast-table-head-copy">
+                <span class="micro-label">FLIGHT LOADING PLAN</span>
+                <h3 id="forecast-table-title">Recommended meal quantities</h3>
+                <p>Past-flight choices guide the estimate. Every extra meal is accounted for in the buffer columns.</p>
+              </div>
+              <div class="forecast-table-legend" aria-label="Table key">
+                <span><i class="legend-forecast"></i> Forecast</span>
+                <span><i class="legend-buffer"></i> Extra buffer</span>
+                <span><i class="legend-prepare"></i> Prepare</span>
+              </div>
+            </div>
+            <div class="forecast-table-wrap" tabindex="0" aria-label="Meal loading plan table. Scroll horizontally on small screens.">
+              <table class="forecast-table">
+                <thead><tr><th scope="col">MEAL OPTION / PAST-FLIGHT MIX</th><th scope="col" class="forecast-number">CONFIRMED</th><th scope="col" class="forecast-number">FROM PENDING</th><th scope="col" class="forecast-number">FORECAST</th><th scope="col" class="forecast-number">BUFFER</th><th scope="col" class="forecast-number">PREPARE</th></tr></thead>
+                <tbody>
+                  {% for r in forecast_rows %}
+                  <tr style="--forecast-row: {{ loop.index0 }}">
+                    <th scope="row"><span class="forecast-meal-name"><i style="--meal: {{ r.color }}"></i><span><span class="forecast-meal-title">{{ r.name }}{% if r.seasonal %}<small class="forecast-seasonal-tag">{{ festivals[0].name }} option</small>{% endif %}</span><small class="forecast-history-share">Past-flight mix: {{ "%.1f"|format(r.history_share) }}%</small></span></span></th>
+                    <td class="forecast-number"><span class="forecast-confirmed">{{ r.confirmed }}</span></td>
+                    <td class="forecast-number"><span class="forecast-pending-value">{{ r.from_pending }}</span></td>
+                    <td class="forecast-number"><span class="forecast-expected-cell"><strong class="forecast-expected-value">{{ r.expected }}</strong><span class="forecast-row-meter" aria-hidden="true"><i style="--w: {{ (r.expected / (forecast_demand if forecast_demand else 1) * 100)|round(1) }}%"></i></span></span></td>
+                    <td class="forecast-number"><span class="forecast-buffer-cell"><strong class="forecast-buffer-value">+{{ r.buffer }}</strong><small>{% if r.buffer %}{{ r.base_buffer }} base{% if r.seasonal_buffer %} · {{ r.seasonal_buffer }} {{ festivals[0].name }}{% endif %}{% else %}No extra{% endif %}</small></span></td>
+                    <td class="forecast-number"><span class="forecast-stock-pill"><strong class="forecast-stock-value">{{ r.stock }}</strong></span></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot><tr><th scope="row">TOTAL PLANNED</th><td class="forecast-number">{{ forecast_confirmed }}</td><td class="forecast-number">{{ forecast_from_pending }}</td><td class="forecast-number">{{ forecast_demand }}</td><td class="forecast-number"><strong>+{{ forecast_buffer }}</strong><small class="forecast-total-buffer-detail">{{ forecast_standard_buffer }} base{% if festivals %} + {{ forecast_seasonal_buffer }} {{ festivals[0].name }}{% endif %}</small></td><td class="forecast-number"><strong>{{ forecast_stock }}</strong></td></tr></tfoot>
+              </table>
+            </div>
+            <div class="forecast-table-foot"><span class="forecast-table-foot-check" aria-hidden="true">✓</span><span>Totals reconcile across all meal rows. No buffer is added to a zero-demand option.</span><span class="forecast-table-foot-count">{{ forecast_rows|length }} meal options</span></div>
+          </section>
+
+          <section class="sm-feedback-panel" id="sm-buffer-feedback" data-base-buffer="{{ forecast_buffer }}" aria-labelledby="sm-buffer-feedback-title">
+            <div class="sm-feedback-copy">
+              <span class="micro-label">LEARNING FROM CABIN SERVICE</span>
+              <h3 id="sm-buffer-feedback-title">On-flight outcomes improve the next buffer</h3>
+              <p>Delivered, not-delivered, and unclaimed canceled meals become real service feedback. A resold meal is counted as reassigned—not wasted.</p>
+              <div class="sm-feedback-status" data-fb-status>{% if service_feedback.ready %}Feedback sample ready{% else %}Collecting service outcomes{% endif %}</div>
+            </div>
+            <div class="sm-feedback-metrics">
+              <div><small>Delivered</small><strong data-fb-delivered>{{ service_feedback.delivered }}</strong></div>
+              <div><small>Not delivered</small><strong data-fb-not-delivered>{{ service_feedback.not_delivered }}</strong></div>
+              <div><small>Offers claimed</small><strong data-fb-sold>{{ service_feedback.offers_sold }}</strong></div>
+              <div><small>Unclaimed cancellations</small><strong data-fb-unclaimed>{{ service_feedback.unclaimed_canceled }}</strong></div>
+              <div><small>Outcomes recorded</small><strong data-fb-sample>{{ service_feedback.outcomes_count }}/4 min.</strong></div>
+            </div>
+            <div class="sm-feedback-recommendation">
+              <div><small>BASE BUFFER</small><strong>+<span data-fb-base>{{ forecast_buffer }}</span></strong></div>
+              <span class="sm-feedback-minus" data-fb-operator aria-hidden="true">{% if service_feedback.adjustment < 0 %}−{% else %}+{% endif %}</span>
+              <div><small>LEARNED ADJUSTMENT</small><strong data-fb-adjustment>{% if service_feedback.ready %}{{ service_feedback.adjustment|abs }}{% else %}—{% endif %}</strong></div>
+              <span class="sm-feedback-equals" aria-hidden="true">=</span>
+              <div class="sm-feedback-next"><small>NEXT-FLIGHT GUIDE</small><strong>+<span data-fb-next>{{ service_feedback.next_buffer }}</span></strong></div>
+            </div>
+            <p class="sm-feedback-footnote" data-fb-footnote>{% if service_feedback.ready %}Not-delivered outcomes can raise the next-flight buffer signal; unclaimed canceled meals can lower it. The net adjustment is capped at 30% of the base buffer. Review why a meal was not delivered before using this planning guide; nothing changes on the current flight automatically.{% else %}Record at least four closed meal outcomes before the demo recommends a next-flight buffer adjustment. A resold meal is reassigned stock, not waste. This does not change the current flight's loaded meals.{% endif %}</p>
+          </section>
+
+          <section class="forecast-waste-card" aria-labelledby="forecast-waste-title">
+            <div class="forecast-waste-header">
+              <div class="forecast-waste-copy">
+                <span class="micro-label">HISTORICAL BUFFER COMPARISON</span>
+                <h3 id="forecast-waste-title">Potential extra stock avoided per flight</h3>
+                <p>Each point compares a flat 15% buffer with SkyBite's targeted buffer: 5% standard safety stock plus a festival reserve when needed. It estimates extra meals avoided, not measured food waste.</p>
+              </div>
+              <div class="forecast-waste-total" aria-label="Estimated extra stock avoided across sample flights">
+                <span>ESTIMATED EXTRA STOCK AVOIDED</span>
+                <strong class="count-up" data-count="{{ forecast_waste_total }}">{{ forecast_waste_total }}</strong>
+                <small>meals · {{ forecast_waste_history|length }} sample flights</small>
+              </div>
+            </div>
+            <div class="forecast-waste-guide" aria-label="How to read the line chart">
+              <div class="forecast-waste-guide-item"><i class="guide-dot" aria-hidden="true"></i><span><strong>One dot</strong><small>One previous flight</small></span></div>
+              <div class="forecast-waste-guide-item"><i class="guide-up" aria-hidden="true">↗</i><span><strong>Higher point</strong><small>More extra stock potentially avoided</small></span></div>
+              <div class="forecast-waste-guide-item"><i class="guide-buffer" aria-hidden="true"></i><span><strong>Compared against</strong><small>A fixed 15% extra-meal buffer</small></span></div>
+            </div>
+            <div class="forecast-waste-chart-wrap" tabindex="0" aria-label="Scrollable line chart of estimated extra meals avoided per sample flight">
+              <svg class="forecast-waste-svg" viewBox="0 0 840 224" role="img" aria-labelledby="forecast-waste-svg-title forecast-waste-svg-desc" data-waste-chart>
+                <title id="forecast-waste-svg-title">Estimated extra meals avoided on each sample flight</title>
+                <desc id="forecast-waste-svg-desc">The horizontal axis lists previous sample flights. The vertical axis shows the estimated number of extra meals avoided by using SkyBite's targeted buffer instead of a fixed 15 percent buffer. Focus or tap any point to inspect the calculation.</desc>
+                <defs>
+                  <linearGradient id="forecastWasteArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b8d9bf" stop-opacity=".24"/><stop offset="100%" stop-color="#b8d9bf" stop-opacity=".012"/></linearGradient>
+                </defs>
+                <text class="forecast-waste-axis-title" x="45" y="14">MEALS POTENTIALLY AVOIDED</text>
+                {% for grid in forecast_waste_grid %}
+                  <line class="forecast-waste-gridline" x1="43" y1="{{ grid.y }}" x2="801" y2="{{ grid.y }}" />
+                  <text class="forecast-waste-axis-label" x="30" y="{{ grid.y + 3 }}" text-anchor="end">{{ grid.value }}</text>
+                {% endfor %}
+                <line class="forecast-waste-xaxis" x1="43" y1="154" x2="801" y2="154" />
+                <path class="forecast-waste-area" d="{{ forecast_waste_area_path }}" fill="url(#forecastWasteArea)" />
+                <path class="forecast-waste-line" d="{{ forecast_waste_line_path }}" pathLength="1" />
+                {% for point in forecast_waste_history %}
+                  <g class="forecast-waste-point" style="--point-delay: {{ point.point_index * 65 }}ms"
+                     tabindex="0" focusable="true" role="button"
+                     aria-label="{{ point.flight }}, {{ point.date }}: {{ point.saved }} estimated extra meals potentially avoided"
+                     data-waste-flight="{{ point.flight }}" data-waste-date="{{ point.date }}"
+                     data-waste-saved="{{ point.saved }}" data-waste-flat="{{ point.flat_buffer }}"
+                     data-waste-targeted="{{ point.targeted_buffer }}">
+                    <line class="forecast-waste-point-guide" x1="{{ point.x }}" y1="{{ point.y }}" x2="{{ point.x }}" y2="154" />
+                    <circle class="forecast-waste-hit" cx="{{ point.x }}" cy="{{ point.y }}" r="12" />
+                    <circle class="forecast-waste-dot" cx="{{ point.x }}" cy="{{ point.y }}" r="4.2" />
+                    <text class="forecast-waste-value-label" x="{{ point.x }}" y="{{ point.label_y }}" text-anchor="middle">{{ point.saved }}</text>
+                    <text class="forecast-waste-x-flight" x="{{ point.x }}" y="176" text-anchor="middle">{{ point.flight }}</text>
+                    <text class="forecast-waste-x-date" x="{{ point.x }}" y="190" text-anchor="middle">{{ point.date }}</text>
+                  </g>
+                {% endfor %}
+                <text class="forecast-waste-xaxis-title" x="801" y="213" text-anchor="end">SAMPLE FLIGHTS · OLDEST TO NEWEST →</text>
+              </svg>
+            </div>
+            <p class="forecast-waste-scroll-hint">Swipe horizontally to inspect every sample flight.</p>
+            <div class="forecast-waste-detail" data-waste-detail aria-live="polite" aria-atomic="true">
+              <div class="forecast-waste-detail-intro">
+                <span class="forecast-waste-detail-kicker">FLIGHT BREAKDOWN</span>
+                <strong data-waste-detail-title>Explore a point</strong>
+                <small data-waste-detail-date>Focus, hover over or tap any dot to see the comparison.</small>
+              </div>
+              <div class="forecast-waste-detail-metrics">
+                <div><span>Fixed 15% buffer</span><strong data-waste-flat>—</strong></div>
+                <div><span>SkyBite targeted buffer</span><strong data-waste-targeted>—</strong></div>
+                <div class="forecast-waste-detail-saved"><span>Potential extra meals avoided</span><strong data-waste-saved>—</strong></div>
+              </div>
+            </div>
+            <div class="forecast-waste-foot">
+              <span class="forecast-waste-legend"><i aria-hidden="true"></i> Difference between the two buffer plans</span>
+              <span>Illustrative history only · actual waste needs post-flight leftover data.</span>
+            </div>
+          </section>
+          <div class="forecast-buffer-explainer">
+            <div class="forecast-buffer-mark" aria-hidden="true">＋</div>
+            <div class="forecast-buffer-copy">
+              <span class="micro-label">WHY THIS BUFFER?</span>
+              <p><b>Expected demand:</b> confirmed choices plus undecided passengers distributed using the past-flight meal mix. <b>Standard safety stock:</b> 5% of total forecast demand, rounded up once for the flight. {% if festivals %}<b>{{ festivals[0].name }} reserve:</b> 10% of forecast demand for festival-aligned meals only, rounded up once and split across those rows.{% endif %} There is no minimum add-on per category, so a zero-demand option does not receive a random extra meal.</p>
+            </div>
+          </div>
+          <p class="forecast-footnote"><span aria-hidden="true">ⓘ</span> The {{ not_chosen }} passenger{% if not_chosen != 1 %}s{% endif %} without a saved meal are forecast by the historical mix as a group; no individual passenger is assigned a meal. The history shown here is sample data for the demo.</p>
+        </section>
+      </section>
+    </div>
+    <footer class="app-footer"><span>{% include "_brand.html" %}</span><span>Prepared with care, served with confidence. <i>✳</i></span></footer>
+  </main>
+</div>
+{% endblock %}

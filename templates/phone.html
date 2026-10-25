@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SkyBite Meals · WhatsApp simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/phone.css') }}">
+</head>
+<body>
+  <div class="stage">
+    <aside class="stage-note" id="phone-briefing">
+      <button class="briefing-toggle" id="briefing-toggle" type="button" aria-expanded="true" aria-controls="phone-briefing"><span>Hide briefing</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="stage-note-inner">
+      <div class="stage-brand">
+        <svg viewBox="0 0 40 40" width="32" height="32" aria-hidden="true">
+          <path d="M4 23.5 34 7 22.7 32.5 17.7 22.4 4 23.5Z" fill="#FFA451"/>
+          <path d="m6 28 10-1.2 3.8 5.1L6 28Z" fill="#FFE8C9" opacity=".72"/>
+        </svg>
+        <span>SkyBite</span>
+      </div>
+      <h1>The passenger's phone</h1>
+      <p>This page stands in for Varun's WhatsApp. Open it on a second phone or laptop.</p>
+      <p>The airline's message appears here when staff fast-forward to 48 hours before departure. Whatever Varun picks here is saved for the website and the crew dashboard at the same moment.</p>
+      <div class="briefing-meta"><span class="live-dot"></span> LIVE DEMO · MESSAGES SYNC AUTOMATICALLY</div>
+      </div>
+    </aside>
+
+    <div class="phone">
+      <header class="wa-head">
+        <span class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
+            <path d="M4 23.5 34 7 22.7 32.5 17.7 22.4 4 23.5Z" fill="#FFA451"/>
+            <path d="m6 28 10-1.2 3.8 5.1L6 28Z" fill="#FFE8C9" opacity=".72"/>
+          </svg>
+        </span>
+        <div class="wa-who">
+          <div class="wa-name">SkyBite Meals</div>
+          <div class="wa-sub" id="wa-sub">online</div>
+        </div>
+        <div class="wa-head-actions" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="m16 10 5-3v10l-5-3z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M7 3h3l2 5-2.1 1.7a14 14 0 0 0 4.4 4.4L16 12l5 2v3c0 1.1-.9 2-2 2C11 19 5 13 4 5c0-1.1.9-2 2-2z"/></svg>
+          <span class="wa-more">⋮</span>
+        </div>
+      </header>
+      <div class="sim-strip">Simulator for the demo. The real version sends through the WhatsApp Business API.</div>
+
+      <main class="chat" id="chat" role="log" aria-live="polite" aria-label="Chat with SkyBite Meals">
+        <p class="empty" id="empty">No messages yet.<br>The airline writes first, 48 hours before the flight.</p>
+      </main>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <label class="visually-hidden" for="text">Type a message</label>
+        <input id="text" name="text" type="text" maxlength="300" placeholder="Waiting for the airline's message" disabled>
+        <button class="send" id="send" type="submit" aria-label="Send" disabled>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6l.1 6.5L15 12 3.5 13.9l-.1 6.5Z" fill="currentColor"/></svg>
+        </button>
+      </form>
+
+      <div class="sheet-backdrop" id="sheet-backdrop">
+        <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+          <header class="sheet-head">
+            <button class="sheet-close" id="sheet-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <h2 id="sheet-title">Meals</h2>
+          </header>
+          <div class="sheet-rows" id="sheet-rows"></div>
+          <footer class="sheet-foot">
+            <button class="sheet-send" id="sheet-send" type="button" disabled>Send</button>
+          </footer>
+        </section>
+      </div>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/phone.js') }}" defer></script>
+</body>
+</html>

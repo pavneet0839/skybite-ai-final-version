@@ -1,0 +1,21 @@
+{# One shared 2D airliner (top view, nose to the right). Use with <svg><use href="#sb-plane"/></svg> #}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <linearGradient id="sbf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#f3f5f9"/><stop offset="1" stop-color="#bcc5d3"/></linearGradient>
+  <linearGradient id="sbw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eef1f6"/><stop offset="1" stop-color="#b7c0ce"/></linearGradient>
+  <symbol id="sb-plane" viewBox="0 0 240 120">
+    <g id="sb-half" stroke="#8c9ab0" stroke-width=".7" stroke-linejoin="round">
+      <path d="M160 53 L96 5 L80 5 L108 53Z" fill="url(#sbw)"/>
+      <path d="M85.6 14.6 L106.6 50.6 L115.6 50.6 L94.6 14.6Z" fill="#cdd5e0" stroke="none"/>
+      <path d="M80 5 L74 1.5 L78 1.5 L87 5Z" fill="#c9a35e" stroke="none"/>
+      <rect x="108" y="22.4" width="27" height="9.2" rx="4.6" fill="url(#sbf)"/>
+      <ellipse cx="134.2" cy="27" rx="2.1" ry="4" fill="#2a3140" stroke="none"/>
+      <path d="M48 54 L22 31 L14 31 L30 54Z" fill="url(#sbw)"/>
+    </g>
+    <use href="#sb-half" transform="translate(0 120) scale(1 -1)"/>
+    <path d="M237 60 C233 54.6 222 52.4 205 52 L60 52 C40 52 22 56 8 59.2 L8 60.8 C22 64 40 68 60 68 L205 68 C222 67.6 233 65.4 237 60Z" fill="url(#sbf)" stroke="#8c9ab0" stroke-width=".7"/>
+    <path d="M30 60 L74 60" stroke="#c9a35e" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M70 55.6 L200 55.6 M70 64.4 L200 64.4" stroke="#55657f" stroke-width="1.5" stroke-dasharray="2.2 3.4" fill="none"/>
+    <path d="M219 56.6 Q231 57.8 233.4 60 Q231 62.2 219 63.4 Q222.4 60 219 56.6Z" fill="#26344d"/>
+    <path d="M40 54.4 L212 54.4" stroke="#fff" stroke-width="1" opacity=".85" fill="none"/>
+  </symbol>
+</defs></svg>

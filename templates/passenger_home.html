@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Your journey · SkyBite{% endblock %}
+{% block body_class %}page-home{% endblock %}
+{% block css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/passenger.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/passenger_features.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/onflight_exchange.css') }}?v=25">{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='js/passenger.js') }}"></script><script defer src="{{ url_for('static', filename='js/passenger_features.js') }}"></script><script defer src="{{ url_for('static', filename='js/meal_products.js') }}"></script><script defer src="{{ url_for('static', filename='js/onflight_exchange.js') }}?v=25"></script>{% endblock %}
+
+{% block content %}
+{% include "_plane.html" %}
+<div class="sky-base" data-skybase aria-hidden="true"></div>
+<div class="sky-img" data-skyimg aria-hidden="true"></div>
+<canvas id="clouds" aria-hidden="true"></canvas>
+<div class="sky-grain" aria-hidden="true"></div>
+<div class="flightbar" aria-hidden="true"><b>{{ flight.origin }}</b><div class="fb-track"><span class="fb-done" data-fbdone></span><svg class="fb-plane" data-fbplane viewBox="0 0 240 120"><use href="#sb-plane"/></svg></div><b>{{ flight.dest }}</b></div>
+
+<header class="topbar">
+  {% include "_brand.html" %}
+  <nav aria-label="Sections"><a href="#journey" class="active">Journey</a><a href="#meals">Menu</a><a href="#travellers">Meal choices</a><a href="#meal-exchange" id="pw-exchange-nav" hidden>On-board offers</a><a href="#details">Details</a></nav>
+  <div class="top-right">{% include "_passenger_features.html" %}<span class="pnr-chip"><i></i> <b>{{ pnr }}</b></span>
+    <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="logout_role" value="passenger"><button class="ghost-btn" type="submit">Sign out ↗</button></form></div>
+</header>
+
+<main>
+  <!-- 1 · HERO: 2D plane flies the route as you scroll (nothing is pinned) -->
+  <section class="hero" id="journey" data-hero>
+    <div class="hero-pin">
+      <div class="hero-stage" data-stage>
+      <div class="hero-copy" data-hero-copy>
+        <span class="kicker">✳ WELCOME ABOARD, {{ first_name|upper }}</span>
+        <h1>Good food takes<br>you <em>further.</em></h1>
+        <p>Thoughtfully prepared meals for flight {{ flight.number }}. Scroll to follow your route to {{ flight.dest_city }}.</p>
+      </div>
+      <svg class="route" data-route aria-hidden="true"><path class="route-base" data-route-base/><path class="route-trail" data-route-trail/><path class="route-done" data-route-done/></svg>
+      <div class="plane" data-plane aria-hidden="true"><svg viewBox="0 0 240 120"><use href="#sb-plane"/></svg></div>
+      <div class="city from"><small>DEPARTURE</small><b>{{ flight.origin }}</b><span>{{ flight.origin_city }}</span></div>
+      <div class="city to"><small>ARRIVAL</small><b>{{ flight.dest }}</b><span>{{ flight.dest_city }}</span></div>
+      <div class="hero-meta">
+        <span><small>FLIGHT</small><b>{{ flight.number }}</b></span><span><small>DEPARTS</small><b>{{ fmt_day(flight.departs) }} · {{ fmt_time(flight.departs) }}</b></span><span><small>MEAL CUTOFF</small><b>{{ fmt_time(flight.cutoff) }}</b></span>
+        <span class="status"><i></i><b data-status>READY FOR DEPARTURE</b></span>
+      </div>
+      <a class="scroll-cue" href="#meals"><span>↓</span> SCROLL</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · MENU: horizontal 3D carousel driven by vertical scroll -->
+  <section class="menu" id="meals" data-menu>
+    <div class="menu-pin">
+      <div class="menu-head" data-reveal>
+        <span class="kicker">✳ CURATED FOR YOUR JOURNEY</span>
+        <h2>Flavours for <em>every journey.</em></h2>
+        {% if festivals %}<p class="fest"><b>{{ festivals[0].name }} specials are on the menu.</b> {{ festivals[0].note }}</p>{% endif %}
+      </div>
+      <div class="menu-nav"><button type="button" data-prev aria-label="Previous meal">←</button><button type="button" data-next aria-label="Next meal">→</button></div>
+      <div class="menu-stage" data-scroller><div class="menu-track" data-track>
+        {% for m in meals[:6] %}
+        <a class="mcard" href="#travellers" style="--meal: {{ m.color }}" data-mcard>
+          <div class="mcard-art"><span class="num">0{{ loop.index }}</span><span class="art">{% include "_meal_art.html" %}</span></div>
+          <div class="mcard-body"><small>{% if m.festival_only %}SEASONAL FAVOURITE{% else %}MADE TO SUIT YOU{% endif %}</small><h3>{{ m.name }}</h3><p>{{ m.description }}</p><span class="go">Choose for my booking →</span></div>
+        </a>
+        {% endfor %}
+      </div></div>
+    </div>
+  </section>
+
+  <!-- 3 · TRAVELLERS -->
+  <section class="block" id="travellers">
+    <div class="block-head" data-reveal><span class="kicker">✳ THE PEOPLE ON THIS BOOKING</span><h2>Everyone's meal, <em>their way.</em></h2><p>Pick a meal for each traveller. Choices sync to the crew team.</p></div>
+    <div class="travellers">
+      {% for p in people %}
+      {% set cur = meal_by_code[p.meal_code] if p.meal_code else none %}
+      {% set late_request = late_requests_by_pax.get(p.id) %}
+      <article class="tcard" data-reveal data-tilt data-pax-id="{{ p.id }}" data-late-status="{{ late_request.status if late_request else '' }}">
+        <div class="tcard-top"><span class="avatar">{{ p.first_name[:1]|upper }}{{ p.last_name[:1]|upper }}</span><div><small>SEAT {{ p.seat }}</small><h3>{{ p.first_name }} {{ p.last_name }}</h3></div></div>
+        <div class="tcard-meal">
+          {% if cur %}<span class="st ok">✓ MEAL CHOSEN</span><div class="cur" style="--meal: {{ cur.color }}"><span class="cur-art">{% set m = cur %}{% include "_meal_art.html" %}</span><span><b>{{ dish_by_pax.get(p.id, {}).get('name', cur.name) }}</b><small>{{ cur.name }} · {{ source_labels[p.meal_source] }}</small></span></div>
+          {% else %}<span class="st">＋ MEAL NOT CHOSEN</span><div class="cur"><span class="cur-art empty">✳</span><span><b>No meal chosen yet</b><small>Pick something that suits you.</small></span></div>{% endif %}
+        </div>
+        {% if late_request %}
+          {% if late_request.status == 'pending' %}
+            <div class="late-request-state is-pending"><span class="late-request-icon">◷</span><span><b>Late request sent</b><small>Waiting for crew review. {{ late_request.old_meal_name or 'No meal' }} stays unchanged until approved. Requested: {{ late_request.requested_meal_name }}{% if late_request.requested_dish_name %} · {{ late_request.requested_dish_name }}{% endif %}.</small></span></div>
+          {% elif late_request.status == 'alternative_offered' %}
+            <div class="late-request-state is-alternative"><span class="late-request-icon">↔</span><span><b>Crew offered an alternative</b><small>{{ late_request.requested_meal_name }} could not be confirmed. Suggested meal: <strong>{% if late_request.alternative_dish_name %}{{ late_request.alternative_dish_name }} ({{ late_request.alternative_meal_name }}){% else %}{{ late_request.alternative_meal_name }}{% endif %}</strong>.</small></span></div>
+            <div class="late-request-response">
+              <form method="post" action="{{ url_for('respond_late_alternative', request_id=late_request.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="accept"><button class="gold-btn" type="submit"><span>Accept alternative</span><span>✓</span></button></form>
+              <form method="post" action="{{ url_for('respond_late_alternative', request_id=late_request.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="decline"><button class="late-text-btn" type="submit">Keep current meal</button></form>
+            </div>
+          {% elif late_request.status == 'approved' %}
+            <div class="late-request-state is-approved"><span class="late-request-icon">✓</span><span><b>Late change approved</b><small>Your meal is now {% if late_request.requested_dish_name %}{{ late_request.requested_dish_name }} ({{ late_request.requested_meal_name }}){% else %}{{ late_request.requested_meal_name }}{% endif %}. The crew plan has been updated.</small></span></div>
+          {% elif late_request.status == 'declined' %}
+            <div class="late-request-state is-declined"><span class="late-request-icon">×</span><span><b>Late request declined</b><small>{{ late_request.decision_note or 'The original meal remains unchanged.' }}{% if late_request.old_meal_name %} Original meal: {% if late_request.old_dish_name %}{{ late_request.old_dish_name }} ({{ late_request.old_meal_name }}){% else %}{{ late_request.old_meal_name }}{% endif %} remains confirmed.{% else %} No meal was confirmed before the request.{% endif %}</small></span></div>
+          {% elif late_request.status == 'alternative_accepted' %}
+            <div class="late-request-state is-approved"><span class="late-request-icon">✓</span><span><b>Alternative confirmed</b><small>Your meal is now {% if late_request.alternative_dish_name %}{{ late_request.alternative_dish_name }} ({{ late_request.alternative_meal_name }}){% else %}{{ late_request.alternative_meal_name }}{% endif %}.</small></span></div>
+          {% elif late_request.status == 'alternative_declined' %}
+            <div class="late-request-state is-declined"><span class="late-request-icon">↩</span><span><b>Alternative declined</b><small>No meal change was made. {% if late_request.old_meal_name %}{% if late_request.old_dish_name %}{{ late_request.old_dish_name }} ({{ late_request.old_meal_name }}){% else %}{{ late_request.old_meal_name }}{% endif %} remains confirmed.{% else %}You still have no confirmed meal.{% endif %}</small></span></div>
+          {% endif %}
+        {% endif %}
+        {% if not late_request or late_request.status not in ['pending', 'alternative_offered'] %}
+          <button class="gold-btn" type="button" data-open-picker data-pax="{{ p.id }}" data-name="{{ p.first_name }}" data-current="{{ p.meal_code or '' }}" data-current-dish="{{ dish_by_pax.get(p.id, {}).get('code', '') }}" data-late="{{ 'true' if locked else 'false' }}"><span>{% if locked %}{{ 'Request late change' if cur else 'Request a meal' }}{% else %}{{ 'Change meal' if cur else 'Choose a meal' }}{% endif %}</span><span>↗</span></button>
+        {% else %}
+          <button class="gold-btn late-request-disabled" type="button" disabled><span>Request under review</span><span>◷</span></button>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ON-BOARD MEAL EXCHANGE: activated by the crew when On-flight mode starts -->
+  <section class="block px-exchange" id="meal-exchange" data-exchange-root hidden
+           data-url="{{ url_for('of.passenger_exchange_data') }}"
+           data-purchase-url="{{ url_for('of.purchase_exchange_offer', offer_id=0) }}"
+           data-csrf="{{ csrf_token() }}" aria-labelledby="px-exchange-title">
+    <div class="px-exchange-head">
+      <div><span class="kicker">✳ AVAILABLE WHILE ON BOARD</span><h2 id="px-exchange-title">A little more <em>for less.</em></h2>
+        <p>When a meal is canceled before delivery, it can be offered to another passenger at 20% off.</p></div>
+      <span class="px-exchange-live"><i></i><span data-px-mode-label>CHECKING CABIN</span></span>
+    </div>
+    <div class="px-notification" data-px-notification role="status" aria-live="polite" hidden><span class="px-notification-icon">✳</span><span><b>New meal available onboard</b><small data-px-notification-copy>A discounted meal has been released by the crew.</small></span></div>
+    <div class="px-offer-grid" data-px-offers></div>
+    <div class="px-own-offers" data-px-own hidden></div>
+    <div class="px-purchases" data-px-purchases hidden></div>
+    <p class="px-exchange-empty" data-px-empty hidden>No discounted meals are available right now. If the crew releases an unserved meal, it will appear here automatically.</p>
+    <p class="px-exchange-note"><span>ⓘ</span> Demo checkout records a simulated purchase in SkyBite; no real payment is processed. Each available meal can be purchased only once.</p>
+  </section>
+
+  <!-- 4 · DETAILS + FINALE -->
+  <section class="block" id="details">
+    <div class="block-head" data-reveal><span class="kicker">THE PRACTICAL DETAILS</span><h2>All set for <em>take-off.</em></h2></div>
+    <div class="details">
+      <div class="dcard" data-reveal><span>✈</span><small>FLIGHT</small><b>{{ flight.number }}</b><i>{{ flight.origin_city }} → {{ flight.dest_city }}</i></div>
+      <div class="dcard" data-reveal><span>◷</span><small>DEPARTURE</small><b>{{ fmt_time(flight.departs) }}</b><i>{{ fmt_day(flight.departs) }}</i></div>
+      <div class="dcard" data-reveal><span>⌁</span><small>MEAL CUTOFF</small><b>{{ fmt_time(flight.cutoff) }}</b><i>{{ fmt_day(flight.cutoff) }} · 4 hours before departure</i></div>
+    </div>
+    <div class="finale" data-reveal><h2>Better meals.<br><em>Happier journeys.</em></h2><p>Your seat is waiting. Choose something you'll look forward to.</p><a class="gold-btn" href="#travellers"><span>Choose my meals</span><span>↗</span></a></div>
+    <footer>{% include "_brand.html" %}<span>Good taste travels. ✳</span></footer>
+  </section>
+</main>
+
+<div id="late-status-live" data-url="{{ url_for('passenger_late_requests_status') }}" hidden></div>
+
+<!-- Meal picker: one roomy panel shared by all travellers -->
+<dialog class="picker" id="picker" aria-labelledby="picker-title">
+  <form method="post" action="{{ url_for('change_meal') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="pax_id" id="picker-pax"><input type="hidden" name="dish_code" id="picker-dish-code">
+    <div class="picker-head"><div><small data-picker-kicker>MADE TO SUIT YOU</small><h2 id="picker-title">Choose a meal</h2></div><button type="button" class="x" data-close aria-label="Close">✕</button></div>
+    <p class="picker-late-note" data-picker-notice hidden>Meal selection has closed. This will send a request to the crew, not change your confirmed meal immediately. You’ll see the decision here.</p>
+    <div class="picker-content" data-picker-content>
+      <section class="pw-category-step" data-category-step aria-labelledby="pw-category-title">
+        <div class="pw-category-heading"><span class="pw-product-step">STEP 1 · MEAL CATEGORY</span><h3 id="pw-category-title">Choose your meal type</h3><p>Select a category first. You’ll choose the exact dish next.</p></div>
+        <div class="picker-grid">
+          {% for m in meals %}
+          <label class="tile" style="--meal: {{ m.color }}"><input type="radio" name="meal_code" value="{{ m.code }}" required>
+            <span class="tile-art">{% include "_meal_art.html" %}</span><b>{{ m.name }}</b><span class="tile-desc">{{ m.description }}</span><i class="tick">✓</i></label>
+          {% endfor %}
+        </div>
+      </section>
+      <section class="pw-product-picker" data-product-picker hidden aria-labelledby="pw-product-title">
+        <div class="pw-product-heading"><span class="pw-product-step">STEP 2 · SPECIFIC DISH</span><h3 id="pw-product-title" tabindex="-1">Choose the dish you want</h3><p>The crew dashboard and any late-change request will use this exact dish, not just the meal category.</p></div>
+        <div class="pw-product-grid" data-product-grid></div>
+        <p class="pw-product-status" data-product-status role="status" aria-live="polite">Choose a meal category first, then select one dish.</p>
+      </section>
+      <section class="passenger-note-box" aria-labelledby="passenger-note-title" hidden>
+        <div class="passenger-note-heading">
+          <span class="passenger-note-icon" aria-hidden="true">✳</span>
+          <div><label id="passenger-note-title" for="passenger-note">Short note for crew (optional)</label>
+            <p>This note appears as an alert in the crew's Live Activity.</p></div>
+        </div>
+        <textarea id="passenger-note" name="passenger_note" rows="2" maxlength="160" placeholder="e.g. Please keep the chutney separate" aria-describedby="passenger-note-help passenger-note-count"></textarea>
+        <div class="passenger-note-foot"><span id="passenger-note-help">Keep it brief (160 characters max).</span><span id="passenger-note-count" aria-live="polite">0 / 160</span></div>
+      </section>
+      <script type="application/json" id="pw-dish-catalog">{{ dish_catalog|tojson }}</script>
+    </div>
+    <div class="picker-foot">
+      <button type="button" class="pw-step-back" data-back-to-categories hidden>← Meal categories</button>
+      <span data-picker-footnote>Choose a meal category to continue</span>
+      <button type="button" class="gold-btn" data-continue-to-dishes disabled><span>Continue to dishes</span><span>→</span></button>
+      <button class="gold-btn" type="submit" data-save-meal hidden disabled><span data-picker-submit-label>Save this meal</span><span>↗</span></button>
+    </div>
+  </form>
+</dialog>
+
+{% with messages = get_flashed_messages(with_categories=true) %}{% endwith %}
+{% endblock %}

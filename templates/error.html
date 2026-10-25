@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · SkyBite{% endblock %}
+{% block body_class %}page-error{% endblock %}
+
+{% block content %}
+<div class="shell error-wrap">
+  {% include "_brand.html" %}
+  <p class="error-code">{{ code }}</p>
+  <h1 class="page-title">{{ title }}</h1>
+  <p class="lede">{{ text }}</p>
+  <a class="btn btn-primary" href="{{ home }}">Go back</a>
+</div>
+{% endblock %}

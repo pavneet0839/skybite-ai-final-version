@@ -1,0 +1,15 @@
+<div class="pw-language" data-pw-language data-pw-save-url="{{ url_for('passenger_features.save_language') }}">
+  <label class="pw-language-label" for="pw-language-select">Language</label>
+  <select class="pw-language-select" id="pw-language-select" name="language" aria-label="Choose language">
+    <option value="hi">हिन्दी · Hindi</option>
+    <option value="bn">বাংলা · Bengali</option>
+    <option value="mr">मराठी · Marathi</option>
+    <option value="te">తెలుగు · Telugu</option>
+    <option value="ta">தமிழ் · Tamil</option>
+    <option value="ja">日本語 · Japanese</option>
+    <option value="en">English</option>
+  </select>
+  <span class="pw-language-status" aria-live="polite"></span>
+  <input type="hidden" class="pw-language-csrf" value="{{ csrf_token() }}">
+  <input type="hidden" class="pw-language-current" value="{{ session.get('pw_language', 'en') }}">
+</div>

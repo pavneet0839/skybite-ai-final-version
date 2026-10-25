@@ -1,0 +1,57 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/seatmap.css') }}?v=25">
+<section class="ops-panel sm-panel" id="sm-root" data-url="{{ url_for('sm.data') }}"
+         data-csrf="{{ csrf_token() }}" data-mode-url="{{ url_for('of.set_mode') }}"
+         data-service-url="{{ url_for('of.update_seat_service', passenger_id=0) }}"
+         data-exchange-service-url="{{ url_for('of.update_exchange_service', purchase_id=0) }}"
+         aria-labelledby="sm-title">
+  <div class="sm-head">
+    <div>
+      <span class="micro-label">CABIN VIEW</span>
+      <h2 id="sm-title">Seat map</h2>
+      <p>Every seat takes the colour of its meal. Tap a seat to see who sits there and what to serve.</p>
+    </div>
+    <span class="sm-live" id="sm-live"><i></i><span id="sm-live-text">LIVE</span></span>
+  </div>
+
+  <div class="sm-flight-ops" aria-label="On-flight service controls">
+    <div class="sm-flight-ops-copy">
+      <span class="sm-flight-ops-icon" aria-hidden="true">✳</span>
+      <span><strong>On-flight mode</strong><small>Track meal delivery, record not-delivered meals, and release a canceled meal at 20% off.</small></span>
+    </div>
+    <div class="sm-flight-ops-action"><span class="sm-flight-mode-state" id="sm-flight-mode-state">OFF · PRE-SERVICE</span>
+      <button class="sm-flight-mode-toggle" id="sm-flight-mode-toggle" type="button" aria-pressed="false"><span class="sm-mode-toggle-dot"></span><span id="sm-flight-mode-label">Turn on</span></button>
+    </div>
+    <div class="sm-flight-ops-stats" id="sm-flight-ops-stats" aria-live="polite">
+      <span><b data-sm-outcome="delivered">0</b><small>Delivered</small></span>
+      <span><b data-sm-outcome="not_delivered">0</b><small>Not delivered</small></span>
+      <span><b data-sm-outcome="cancelled">0</b><small>Cancelled</small></span>
+      <span><b data-sm-outcome="offers_sold">0</b><small>Exchange sold</small></span>
+    </div>
+  </div>
+
+  <div class="sm-tabs" id="sm-tabs" role="tablist" aria-label="Cabins"></div>
+
+  <div class="sm-tools">
+    <div class="sm-legend" id="sm-legend" aria-label="Filter seats by meal"></div>
+    <label class="sm-search">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m13.2 13.2 3.6 3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <input id="sm-search" type="search" placeholder="Find a seat or name, e.g. 13A" autocomplete="off" aria-label="Find a seat or passenger">
+    </label>
+  </div>
+
+  <p class="sm-ticker" id="sm-ticker" aria-live="polite"></p>
+
+  <div class="sm-stage" id="sm-stage"><p class="sm-loading">Loading the cabin…</p></div>
+
+  <div class="sm-key" aria-hidden="true">
+    <span><i class="sm-k-alert"></i>Allergy or strict Jain: serve with care</span>
+    <span><i class="sm-k-none"></i>Meal not chosen yet</span>
+    <span><i class="sm-k-empty"></i>Empty seat</span>
+  </div>
+
+  <div class="sm-scrim" id="sm-scrim" hidden></div>
+  <aside class="sm-drawer" id="sm-drawer" aria-label="Seat details" aria-hidden="true" tabindex="-1">
+    <div id="sm-drawer-body"></div>
+  </aside>
+</section>
+<script src="{{ url_for('static', filename='js/seatmap.js') }}?v=25" defer></script>
